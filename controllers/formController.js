@@ -10,7 +10,10 @@ export const formController = async (req, res) => {
             res.render('Form', { maxId });  // Pass maxId to the view
         } catch (error) {
             console.error("Error fetching maximum ID:", error);
-            res.status(500).send("An error occurred while loading the form.");
+            console.error('Database connection error:', error.message);
+            if (error.code === 'ETIMEDOUT') {
+                console.error('The connection timed out. Check your DB host and network.');
+            }
         }
     } else if (req.method === 'POST') {
         // Use the multer upload middleware to handle file uploads
@@ -20,36 +23,42 @@ export const formController = async (req, res) => {
                 return res.status(500).send("Error uploading files.");
             }
 
-            const { StatusName, IntegrityName, ProductionName, CustodianName, OperatorName, AreaName, PLName, PlatformName, FieldName,
-                PipelineName, StructureName, IsWellName, AnomalyTypeName, AssessmentName, LocationName, ComPName, ReportedName,
-                InspectedName, DescriptionName, ComponentsName, CommentsName, PreparedName, CheckedName, ApprovedName, EnteredName,
-                EquipmentName, CriticalityName, HyperlinkName } = req.body;
-
-
-            const uploadedFiles = {};
-            if (req.files) {
-                uploadedFiles.Document1Name = req.files.Document1Name?.[0]?.filename || null;
-                uploadedFiles.Document2Name = req.files.Document2Name?.[0]?.filename || null;
-                uploadedFiles.Document3Name = req.files.Document3Name?.[0]?.filename || null;
-                uploadedFiles.Document4Name = req.files.Document4Name?.[0]?.filename || null;
-            }
-
-            await db.query(
-                `INSERT INTO FormData (
-                        ANOMALY_STATUS, INTEGRITY_THREAT, PRODUCTION_THREAT, CUSTODIAN, OPERATOR, AREA, PL_NO, PLATFORM,
-                        FIELD, IS_PIPELINE, IS_STRUCTURE, IS_WELL, ANOMALY_TYPE, ASSESSMENT, LOCATION, COMP_DES, REPORTED_DATE,
-                        INSPECTED_DATE, DESCRIPTION, COMPONENTS, COMMENTS, PREPARED_BY, CHECKED_BY, APPROVE_BY, ENTERED_BY,
-                        EQUIPMENT_SUPPLIER, CRITICALITY, HYPERLINK, DOCUMENT_1, DOCUMENT_2, DOCUMENT_3, DOCUMENT_4
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-                [
-                    StatusName, IntegrityName, ProductionName, CustodianName, OperatorName, AreaName, PLName, PlatformName, FieldName,
+            try {
+                const { StatusName, IntegrityName, ProductionName, CustodianName, OperatorName, AreaName, PLName, PlatformName, FieldName,
                     PipelineName, StructureName, IsWellName, AnomalyTypeName, AssessmentName, LocationName, ComPName, ReportedName,
                     InspectedName, DescriptionName, ComponentsName, CommentsName, PreparedName, CheckedName, ApprovedName, EnteredName,
-                    EquipmentName, CriticalityName, HyperlinkName, uploadedFiles.Document1Name, uploadedFiles.Document2Name,
-                    uploadedFiles.Document3Name, uploadedFiles.Document4Name
-                ]
-            );
-            res.redirect('/');  // Redirect to the root/Home page
+                    EquipmentName, CriticalityName, HyperlinkName } = req.body;
+
+
+                const uploadedFiles = {};
+                if (req.files) {
+                    uploadedFiles.Document1Name = req.files.Document1Name?.[0]?.filename || null;
+                    uploadedFiles.Document2Name = req.files.Document2Name?.[0]?.filename || null;
+                    uploadedFiles.Document3Name = req.files.Document3Name?.[0]?.filename || null;
+                    uploadedFiles.Document4Name = req.files.Document4Name?.[0]?.filename || null;
+                }
+
+                await db.query(
+                    `INSERT INTO FormData (
+                            ANOMALY_STATUS, INTEGRITY_THREAT, PRODUCTION_THREAT, CUSTODIAN, OPERATOR, AREA, PL_NO, PLATFORM,
+                            FIELD, IS_PIPELINE, IS_STRUCTURE, IS_WELL, ANOMALY_TYPE, ASSESSMENT, LOCATION, COMP_DES, REPORTED_DATE,
+                            INSPECTED_DATE, DESCRIPTION, COMPONENTS, COMMENTS, PREPARED_BY, CHECKED_BY, APPROVE_BY, ENTERED_BY,
+                            EQUIPMENT_SUPPLIER, CRITICALITY, HYPERLINK, DOCUMENT_1, DOCUMENT_2, DOCUMENT_3, DOCUMENT_4
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+                    [
+                        StatusName, IntegrityName, ProductionName, CustodianName, OperatorName, AreaName, PLName, PlatformName, FieldName,
+                        PipelineName, StructureName, IsWellName, AnomalyTypeName, AssessmentName, LocationName, ComPName, ReportedName,
+                        InspectedName, DescriptionName, ComponentsName, CommentsName, PreparedName, CheckedName, ApprovedName, EnteredName,
+                        EquipmentName, CriticalityName, HyperlinkName, uploadedFiles.Document1Name, uploadedFiles.Document2Name,
+                        uploadedFiles.Document3Name, uploadedFiles.Document4Name
+                    ]
+                );
+                res.redirect('/');  // Redirect to the root/Home page
+            } catch (error) {
+                console.error("Error saving form data:", error.message);
+                res.status(500).send("An error occurred while saving the form data.");
+            }
+
         });
     }
 };
