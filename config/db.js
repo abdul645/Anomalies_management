@@ -9,6 +9,10 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD || 'root',
     database: process.env.DB_NAME || 'FormDB',
     port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    connectTimeout: 10000, // Increase timeout to 10 seconds
 });
 
 export default pool.promise();
