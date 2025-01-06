@@ -7,14 +7,12 @@ export const formController = async (req, res) => {
         try {
             const [result] = await db.query('SELECT MAX(ID) AS MaxId FROM FormData');
             const maxId = result[0]?.MaxId || 0;
-            res.render('Form', { maxId });  // Pass maxId to the view
+            res.render('Form', { maxId });
         } catch (error) {
             console.error("Error fetching maximum ID:", error);
-            console.error('Database connection error:', error.message);
-            if (error.code === 'ETIMEDOUT') {
-                console.error('The connection timed out. Check your DB host and network.');
-            }
+            res.status(500).send("Database connection issue. Please try again later.");
         }
+        
     } else if (req.method === 'POST') {
         // Use the multer upload middleware to handle file uploads
         upload(req, res, async (err) => {
@@ -28,8 +26,8 @@ export const formController = async (req, res) => {
                     PipelineName, StructureName, IsWellName, AnomalyTypeName, AssessmentName, LocationName, ComPName, ReportedName,
                     InspectedName, DescriptionName, ComponentsName, CommentsName, PreparedName, CheckedName, ApprovedName, EnteredName,
                     EquipmentName, CriticalityName, HyperlinkName } = req.body;
-
-
+    
+    
                 const uploadedFiles = {};
                 if (req.files) {
                     uploadedFiles.Document1Name = req.files.Document1Name?.[0]?.filename || null;
@@ -37,7 +35,7 @@ export const formController = async (req, res) => {
                     uploadedFiles.Document3Name = req.files.Document3Name?.[0]?.filename || null;
                     uploadedFiles.Document4Name = req.files.Document4Name?.[0]?.filename || null;
                 }
-
+    
                 await db.query(
                     `INSERT INTO FormData (
                             ANOMALY_STATUS, INTEGRITY_THREAT, PRODUCTION_THREAT, CUSTODIAN, OPERATOR, AREA, PL_NO, PLATFORM,
@@ -58,7 +56,7 @@ export const formController = async (req, res) => {
                 console.error("Error saving form data:", error.message);
                 res.status(500).send("An error occurred while saving the form data.");
             }
-
+           
         });
     }
 };
